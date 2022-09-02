@@ -127,8 +127,9 @@ if __name__ == "__main__":
 	yolo_df = pd.DataFrame(yolo_data)
 
 	"""
-	inp_dir = "/home/anam_zahra/Codes/Python_Codes/Ftune_Results_Manipulation/json_files/"
+	#inp_dir = "/home/anam_zahra/Codes/Python_Codes/Ftune_Results_Manipulation/json_files/"
 
+	inp_dir = "./json_files"
 	inp_files = os.listdir(inp_dir)
 	inp_files.remove("gt_test.json")
 
@@ -145,6 +146,7 @@ if __name__ == "__main__":
 	coco_df = coco_df.drop(coco_df[coco_df.category_id != 1].index)
 	coco_df["category_id"] = coco_df["category_id"].astype(int)
 
+	
 	coco_df.set_index(["image_id"],inplace=True)
 
 	P_id_count = dict(coco_df["Person_ID"].value_counts())
@@ -168,7 +170,7 @@ if __name__ == "__main__":
 	fig.supxlabel("People Dist",fontsize = label_fnt,fontweight=sub_ttl_fontweight)
 	person_count_dict["Ground_Truth"] = gt_dict
 	for cnt,k in enumerate(inp_keys):
-		ax.bar(cnt,gt_dict[k],width=0.20,color=color[0])
+		ax.bar(cnt,gt_dict[k],width=0.15,color=color[0])
 
 
 	print("Ground_Truth")
@@ -176,21 +178,32 @@ if __name__ == "__main__":
 	print("*"*10)
 	cl = 1
 	for fl in inp_files:
+
 		dict_key,ext = os.path.splitext(fl)
 		dt_dict = {}
 
 		inp_fl = os.path.join(inp_dir,fl)
 
+		print(inp_fl,"\n")
+
 		with open(inp_fl) as json_data:
 			pred_data = json.load(json_data)
 
 		yolo_df = pd.DataFrame(pred_data)
+		
+		yolo_df['score'] = pd.to_numeric(yolo_df['score'],errors = 'coerce')
 
-		if "ftune" in fl:
 
-			yolo_df = yolo_df.drop(yolo_df[yolo_df.category_id!=0].index)
-		else:
-			yolo_df = yolo_df.drop(yolo_df[yolo_df.category_id!=1].index)
+		
+
+		#yolo_df = yolo_df.astype({'category_id': 'int64','score':'float64'})
+		
+
+		if yolo_df["category_id"].min() == 0:
+			yolo_df["category_id"] = yolo_df["category_id"]+1
+
+		
+		yolo_df = yolo_df.drop(yolo_df[yolo_df.category_id!=1].index)
 
 		yolo_df = yolo_df.drop(yolo_df[yolo_df.score<0.01].index)
 
@@ -218,6 +231,7 @@ if __name__ == "__main__":
 		person_det = 0
 		first_person_counter = 0 
 		secnd_person_counter = 0
+		
 		"""
 		for cnt,k in enumerate(inp_keys):
 			ax.bar(cnt+wd,dt_dict[k],width=0.20,color=color[cl])
@@ -237,16 +251,17 @@ if __name__ == "__main__":
 	for k,v in person_count_dict.items():
 		for cnt,val in enumerate(inp_keys):
 			if cnt==0:
-				ax.bar(cnt+wd,v[val],width=0.20,color=color[x_loc],label=k)
+				ax.bar(cnt+wd,v[val],width=0.15,color=color[x_loc],label=k)
 			else:
-				ax.bar(cnt+wd,v[val],width=0.20,color=color[x_loc])
+				ax.bar(cnt+wd,v[val],width=0.15,color=color[x_loc])
 
 
 		plt.pause(0.05)
 
-		wd+=.20
+		wd+=.15
 		x_loc+=1
 		lg_lst.append(k)
 	plt.xticks(tk,gt_dict.keys())
 	plt.legend()
+	#fig.tight_layout()
 	plt.show()
